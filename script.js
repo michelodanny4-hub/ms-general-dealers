@@ -40,12 +40,15 @@ async function loadFromSupabase() {
       products = prods.map(p => ({ id: p.id, name: p.name, price: Number(p.price), stock: Number(p.stock || 0), img: p.image_url || p.img || 'laptop.jpg' }));
     }
     const { data: quotes } = await supabaseClient.from('quotations').select('*').order('created_at', { ascending: false });
-    if (quotes) quotations = quotes.map(q => ({ id: q.quote_number || q.id, customer: q.customer_name || 'Walk-in', phone: q.customer_phone || PHONE, items: q.items || [], total: Number(q.total_amount || q.total || 0), status: q.status || 'Pending', date: q.created_at ? new Date(q.created_at).toLocaleString() : '' }));
+    if (quotes) quotations = quotes.map(q => ({ dbId: q.id, id: q.quote_number || ('MS-Q-' + q.id), customer: q.customer_name || 'Walk-in', phone: q.customer_phone || PHONE, items: q.items || [], total: Number(q.total_amount || q.total || 0), status: q.status || 'Pending', date: q.created_at ? new Date(q.created_at).toLocaleString() : '' }));
     renderProducts(); renderQuotations(); renderInvoices(); updateReport();
   } catch(e) { console.log('Supabase load - using local data', e); }
 }
 async function saveQuotationToSupabase(q) {
-  try { await supabaseClient.from('quotations').insert([{ customer_name: q.customer, customer_phone: q.phone, total_amount: q.total, status: q.status, items: q.items }]); } catch(e) { console.log(e); }
+  try {
+    const { data } = await supabaseClient.from('quotations').insert([{ quote_number: q.id, customer_name: q.customer, customer_phone: q.phone, total_amount: q.total, status: q.status, items: q.items }]).select().single();
+    if (data) q.dbId = data.id;
+  } catch(e) { console.log(e); }
 }
 async function saveInvoiceToSupabase(inv) {
   try { await supabaseClient.from('payments').insert([{ amount: inv.total, status: inv.status, customer_name: inv.customer }]); } catch(e) { console.log(e); }
@@ -129,10 +132,37 @@ function renderQuotations() {
   if (quotations.length === 0) { div.innerHTML = '<p>No quotations yet.</p>'; return; }
   div.innerHTML = quotations.map((q, idx) => `<div class="card"><h3>${q.id} - ${q.customer} - ${q.status}</h3><p>📞 ${q.phone} | 📅 ${q.date}</p><p>${(q.items||[]).map(i => i.name + ' x' + i.qty + ' = K ' + (i.price * i.qty)).join('<br>')}</p><h3>Total: K ${Number(q.total).toFixed(2)}</h3>${q.status === 'Pending' && currentUser?.role === 'manager' ? `<button onclick="approveQuote(${idx})">✅ Approve</button> <button onclick="rejectQuote(${idx})">❌ Reject</button>` : ''}${q.status === 'Approved' && currentUser?.role === 'bursar' ? `<button onclick="finalizeQuote(${idx})">📄 Finalize & Create Invoice</button>` : ''}</div>`).join('');
 }
-function approveQuote(i) { quotations[i].status = 'Approved'; renderQuotations(); alert('Approved! Bursar can now create Invoice.'); }
-function rejectQuote(i) { quotations[i].status = 'Rejected'; renderQuotations(); }
-function finalizeQuote(i) {
+// --- FIXED: NOW SAVES TO SUPABASE SO BURSAR SEES IT ---
+async function approveQuote(i) {
+  const q = quotations[i];
+  q.status = 'Approved';
+  renderQuotations();
+  try {
+    if (q.dbId) {
+      await supabaseClient.from('quotations').update({ status: 'Approved' }).eq('id', q.dbId);
+    } else {
+      await supabaseClient.from('quotations').update({ status: 'Approved' }).eq('quote_number', q.id);
+      // Fallback: if quote_number was never saved (old quotations), match by customer + total
+      await supabaseClient.from('quotations').update({ status: 'Approved' }).eq('customer_name', q.customer).eq('total_amount', q.total);
+    }
+  } catch(e) { console.log('Approve sync error', e); }
+  alert('Approved! Bursar can now create Invoice. Saved to cloud!');
+}
+async function rejectQuote(i) {
+  const q = quotations[i];
+  q.status = 'Rejected';
+  renderQuotations();
+  try {
+    if (q.dbId) await supabaseClient.from('quotations').update({ status: 'Rejected' }).eq('id', q.dbId);
+    else await supabaseClient.from('quotations').update({ status: 'Rejected' }).eq('customer_name', q.customer).eq('total_amount', q.total);
+  } catch(e) {}
+}
+async function finalizeQuote(i) {
   const q = quotations[i]; q.status = 'Finalized';
+  try {
+    if (q.dbId) await supabaseClient.from('quotations').update({ status: 'Finalized' }).eq('id', q.dbId);
+    else await supabaseClient.from('quotations').update({ status: 'Finalized' }).eq('customer_name', q.customer).eq('total_amount', q.total);
+  } catch(e) {}
   const inv = { id: 'MS-INV-' + Math.floor(10000 + Math.random() * 90000), quoteId: q.id, customer: q.customer, phone: q.phone, items: q.items, total: q.total, status: 'Unpaid', date: new Date().toLocaleString() };
   invoices.push(inv); saveInvoiceToSupabase(inv); renderQuotations(); renderInvoices(); updateReport(); alert('Invoice ' + inv.id + ' Created! Go to Invoices tab.');
 }
