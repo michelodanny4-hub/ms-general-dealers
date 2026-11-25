@@ -1,6 +1,6 @@
 // --- SUPABASE CONNECTION ---
-const SUPABASE_URL = "PASTE-YOUR-PROJECT-URL-HERE";
-const SUPABASE_ANON_KEY = "PASTE-YOUR-ANON-KEY-HERE";
+const SUPABASE_URL = "https://jrkjnzoedcbnzuijqidr.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_qvIcrV-955Ki3i-OHB59AQ_-9pArVLQ";
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // M's General Dealers - Lusaka West, Zamastone - 0779494486
