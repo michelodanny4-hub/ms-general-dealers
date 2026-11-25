@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>M's General Dealers</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+<div class="logo-area"><div class="logo" style="display:flex;align-items:center;justify-content:center;font-size:28px">🛒</div>
+<div><h1>M's General Dealers</h1><p>Buy • Sell • Grow Together</p></div></div>
+<div class="contact"><p>📞 0779494486</p><p>📍 Lusaka West, Zamastone</p><button id="logoutBtn" onclick="logout()" style="display:none">Logout</button></div>
+</header>
+<p id="welcomeMsg" style="text-align:center;font-weight:bold;padding:10px"></p>
+
+<div id="loginScreen" class="card center">
+<h2>🔐 Login to System</h2>
+<p>Customer • Bursar • Management</p>
+<input id="username" placeholder="Username - try: customer">
+<input id="password" type="password" placeholder="Password - 1234">
+<button onclick="login()">Login →</button>
+<div class="demo-box">Customer: customer / 1234<br>Bursar: bursar / 1234<br>Manager: manager / 1234</div>
+</div>
+
+<div id="mainApp" style="display:none">
+<nav>
+<button class="tab active" onclick="showTab('productsTab')">🛒 Products</button>
+<button class="tab" onclick="showTab('quotationsTab')">📋 Quotations</button>
+<button class="tab" onclick="showTab('invoicesTab')">🧾 Invoices</button>
+<button class="tab" onclick="showTab('reportTab')">📊 Sales Report</button>
+</nav>
+
+<div id="productsTab" class="tab-content">
+<h2 style="margin-left:15px">🛒 Products - Lusaka West, Zamastone</h2>
+<div id="productList" class="grid"></div>
+<div id="addProductBox" class="card"><h3>➕ Add New Product (Bursar Only)</h3>
+<input id="pName" placeholder="Product Name"><input id="pPrice" type="number" placeholder="Price K"><input id="pStock" type="number" placeholder="Stock Qty">
+<button onclick="addProduct()">Add Product</button></div>
+<div class="card"><h2>📝 Create Quotation</h2>
+<input id="custName" placeholder="Customer Name - John Phiri"><input id="custPhone" placeholder="Customer Phone - 0779...">
+<div id="quoteItems"></div>
+<div class="totals"><p>Subtotal: K <span id="subtotal">0.00</span></p><p>Tax (16%): K <span id="taxAmt">0.00</span></p><h3>Total: K <span id="grandTotal">0.00</span></h3></div>
+<input id="discount" type="hidden" value="0">
+<button onclick="createQuotation()">✅ Calculate & Create Quotation</button> <button onclick="clearQuote()">Clear</button></div>
+</div>
+
+<div id="quotationsTab" class="tab-content" style="display:none"><h2 style="margin-left:15px">📋 Quotations</h2><div id="quotationList"></div></div>
+<div id="invoicesTab" class="tab-content" style="display:none"><h2 style="margin-left:15px">🧾 Invoices</h2><div id="invoiceList"></div></div>
+<div id="reportTab" class="tab-content" style="display:none"><h2 style="margin-left:15px">📊 Sales Report</h2>
+<div class="report-cards"><div class="card"><p>Today Sales</p><h2 id="todaySales">K 0.00</h2></div><div class="card"><p>Total Paid</p><h2 id="totalPaid">K 0.00</h2></div><div class="card"><p>Total Owed</p><h2 id="totalOwed">K 0.00</h2></div></div>
+<button onclick="exportData()" style="margin-left:15px">📥 Export Backup</button><div id="reportDetails"></div></div>
+</div>
+
+<footer><p>M's General Dealers | Buy • Sell • Grow Together | 📞 0779494486 | 📍 Lusaka West, Zamastone</p></footer>
+<script src="script.js"></script>
+</body>
+</html>
